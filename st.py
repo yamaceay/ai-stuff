@@ -1,79 +1,92 @@
 import numpy as np
 
+FOUND_SOLUTIONS = None
+
+def simple_slice(arr, inds, axis):
+    sl = [slice(None)] * len(arr.shape)
+    sl[axis] = inds
+    return arr[tuple(sl)]
+
+def ndindex(shape):
+    total_size = np.prod(shape)
+    unraveled_index = np.unravel_index(range(total_size), shape)
+    ndlist = np.array(unraveled_index).T.tolist()
+    ndlist = [tuple(x) for x in ndlist]
+    return ndlist
+
 def print_payoff(payoff):
     try:
+        payoff_index = ndindex(payoff.shape[:-1])
         payoff_str = np.array([[
-            f"({payoff[i, j, 0]}, {payoff[i, j, 1]})" 
-            for j in range(payoff.shape[1])] 
-            for i in range(payoff.shape[0])])
-        print(payoff_str)
-    except IndexError as e:
-        print(e)
+            f"{tuple(payoff[m])}" 
+            for m in payoff_index]])
+        print(payoff_str.reshape(payoff.shape[:-1]))
+    except: 
         print(payoff)
 
 def is_dominant(a, b):
-    return np.all([a[k] >= b[k] for k in range(len(a))])
+    return np.all([a >= b])
 
-def find_rational_decisions(matrix):
-    n, m, _ = matrix.shape
+def irrational_decisions(matrix):
+    n_players = len(matrix.shape) - 1
     
-    a_values = [matrix[i, :, 0] for i in range(n)]
-    b_values = [matrix[:, i, 1] for i in range(m)]
+    values_list = []
+    for i in range(n_players):
+        player_matrix = simple_slice(matrix, i, axis=n_players)
+        values = np.moveaxis(player_matrix, source=i, destination=0)
+        values_list.append(values)
+
+    dominance_matrices = [
+        np.zeros((matrix.shape[i], matrix.shape[i]), dtype=bool) 
+        for i in range(n_players)]
+    players_to_delete = [set() for _ in range(n_players)]
     
-    dominance_matrix_a, dominance_matrix_b = np.zeros((n, n), dtype=bool), np.zeros((m, m), dtype=bool)
-    a_to_delete, b_to_delete = set(), set()
-    
-    for i in range(n):
-        for j in range(n):
-            if is_dominant(a_values[i], a_values[j]):
-                dominance_matrix_a[i, j] = True
-                if i != j:
-                    # print(f"Player A: {i} dominates {j}")
-                    a_to_delete.add(j)
-                    
-    for i in range(m):
-        for j in range(m):
-            if is_dominant(b_values[i], b_values[j]):
-                dominance_matrix_b[i, j] = True
-                if i != j:
-                    # print(f"Player B: {i} dominates {j}")
-                    b_to_delete.add(j)
+    for p in range(n_players):    
+        for i in range(matrix.shape[p]):
+            for j in range(matrix.shape[p]):
+                if is_dominant(values_list[p][i], values_list[p][j]):
+                    dominance_matrices[p][i, j] = True
+                    if i != j:
+                        # print(f"Player {p+1}: {i} dominates {j}")
+                        players_to_delete[p].add(j)
                 
-    return dominance_matrix_a, dominance_matrix_b, a_to_delete, b_to_delete
+    return players_to_delete
 
 
-def search_for_dominant_strategies(matrix, depth=0):
+def dfs_dominant_strategies(matrix, history, depth=0):
     print("-------------------------------------------"*2)
 
     print_payoff(matrix)
+    n_players = len(matrix.shape) - 1
     
-    n_strategies_prev = matrix.shape[0] + matrix.shape[1]
+    n_strategies_prev = sum(matrix.shape[:-1])
+    
+    if np.all(matrix.shape[:-1] == np.ones((n_players))):
+        FOUND_SOLUTIONS.append(tuple(np.squeeze(history)))
+        print("SUCCESS")
+        return
         
-    *_, a_to_delete, b_to_delete = find_rational_decisions(matrix)
+    players_to_delete = irrational_decisions(matrix)
+    for i in range(n_players):
+        p_matrix = np.delete(matrix, list(players_to_delete[i]), axis=i)
     
-    a_matrix = np.delete(matrix, list(a_to_delete), axis=0)
-    n_strategies_a = a_matrix.shape[0] + a_matrix.shape[1]
-    
-    if n_strategies_a < n_strategies_prev:
-    
-        print("-------------------------------------------"*2)
-        print("--"*depth + f"Player A won't play: {a_to_delete}")
-        search_for_dominant_strategies(a_matrix, depth+1)
-    
-    b_matrix = np.delete(matrix, list(b_to_delete), axis=1)
-    n_strategies_b = b_matrix.shape[0] + b_matrix.shape[1]
-    
-    if n_strategies_b < n_strategies_prev:
-        
-        print("-------------------------------------------"*2)
-        print("--"*depth + f"Player B won't play: {b_to_delete}")
-        search_for_dominant_strategies(b_matrix, depth+1)
+        n_strategies_p = sum(p_matrix.shape[:-1])
+        if n_strategies_p < n_strategies_prev:
+            print("-------------------------------------------"*2)
+            print("--"*depth + f"Player {i+1} won't play: {players_to_delete[i]}")
+            history[i] = [x for x in history[i] if x not in players_to_delete[i]]
+            dfs_dominant_strategies(p_matrix, history, depth+1)
     
 if __name__ == "__main__":
     
+    FOUND_SOLUTIONS = []
+    
     l, u = -6, 6
-    shape = [10, 6]
+    shape = [2, 2, 1, 2]
 
     payoff = np.random.randint(l, u, size=(*shape, len(shape)))
     
-    search_for_dominant_strategies(payoff)
+    history = [list(range(shape[i])) for i in range(len(shape))]
+    dfs_dominant_strategies(payoff, history=history)
+    
+    print(set(FOUND_SOLUTIONS))
