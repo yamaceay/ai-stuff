@@ -1,11 +1,14 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import multivariate_normal as mvn
+
+criterion = 'aic' # 'bic' or 'aic'
+
 plt.style.use('ggplot')
 
 np.set_printoptions(formatter={'all':lambda x: '%.3f' % x})
 
-def em_gmm_eins(xs, tol=0.01, max_iter=100):
+def em_gmm(xs, tol=0.01, max_iter=100):
     """Einstein summation version of EM for GMM"""
     
     # Estimate parameters
@@ -53,11 +56,6 @@ def predict(_ys: np.ndarray, pis1, mus1, sigmas1, intervals) -> np.ndarray:
     
     return z
 
-def aikake_information_criterium(ll, k):
-    return ll - k
-def bayesian_information_criterium(ll, k, n):
-    return -2*ll + k*np.log(n)
-
 if __name__ == "__main__":    
     N = 1000 # size of samples
     LARGE_M = 25 # number of mixture components
@@ -82,12 +80,17 @@ if __name__ == "__main__":
     for M in range(m_l, m_u):
         
         # Run EM
-        ll1, pis1, mus1, sigmas1 = em_gmm_eins(xs)
+        ll1, pis1, mus1, sigmas1 = em_gmm(xs)
         
         # Calculate the score
-        score = bayesian_information_criterium(ll1, 3*M, N)
+        if criterion == 'bic':
+            score = np.log(N)*3*M - 2*ll1
+        elif criterion == 'aic':
+            score = 2*3*M - 2*ll1
+        else:
+            raise ValueError("Invalid criterion")
+            
         score /= N * LARGE_M
-        # score = aikake_information_criterium(ll1, 3*M)
         scores.append((score, M))
 
         # Generate grid for plotting
