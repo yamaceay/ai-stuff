@@ -63,6 +63,7 @@ def dfs_dominant_strategies(matrix, history, depth=0):
     
     if np.all(matrix.shape[:-1] == np.ones((n_players))):
         FOUND_SOLUTIONS.append(tuple(np.squeeze(history)))
+        print("-------------------------------------------"*2)
         print("SUCCESS")
         return
         
@@ -82,7 +83,7 @@ if __name__ == "__main__":
     FOUND_SOLUTIONS = []
     
     l, u = -6, 6
-    shape = [2, 2, 1, 2]
+    shape = [2, 2, 2]
 
     payoff = np.random.randint(l, u, size=(*shape, len(shape)))
     

@@ -103,6 +103,7 @@ if __name__ == "__main__":
         z = predict(_ys, pis1, mus1, sigmas1, intervals)
 
         # Plot the results
+        fig = plt.figure(figsize=(8,8))
         ax = plt.subplot(111)
         plt.scatter(xs[:,0], xs[:,1], alpha=0.25)
         plt.contour(X, Y, z)
@@ -110,6 +111,8 @@ if __name__ == "__main__":
         plt.title(f"M = {M}, Score: {score:.2f}")
         ax.axes.set_aspect('equal')
         plt.tight_layout()
-        plt.show()
+        # plt.show()
+        fig.savefig(f"res/em_{M}.png")
+        plt.close(fig)
     
     print(sorted(scores))
