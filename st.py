@@ -1,6 +1,13 @@
+import argparse
+import os
+import json 
 import numpy as np
 
-FOUND_SOLUTIONS = None
+parser = argparse.ArgumentParser()
+parser.add_argument("--payoff", "-p", type=str, default=None, help="Path to payoff tensor")
+args = parser.parse_args()
+
+DOMINANT_STRATEGIES = None
 
 def simple_slice(arr, inds, axis):
     sl = [slice(None)] * len(arr.shape)
@@ -25,7 +32,7 @@ def print_payoff(payoff):
         print(payoff)
 
 def is_dominant(a, b):
-    return np.all([a >= b])
+    return np.all([a >= b]) and np.any([a > b])
 
 def irrational_decisions(matrix):
     n_players = len(matrix.shape) - 1
@@ -62,7 +69,7 @@ def dfs_dominant_strategies(matrix, history, depth=0):
     n_strategies_prev = sum(matrix.shape[:-1])
     
     if np.all(matrix.shape[:-1] == np.ones((n_players))):
-        FOUND_SOLUTIONS.append(tuple(np.squeeze(history)))
+        DOMINANT_STRATEGIES.append(tuple(np.squeeze(history)))
         print("-------------------------------------------"*2)
         print("SUCCESS")
         return
@@ -79,15 +86,24 @@ def dfs_dominant_strategies(matrix, history, depth=0):
             dfs_dominant_strategies(p_matrix, history, depth+1)
     
 if __name__ == "__main__":
+      
+    if args.payoff is not None and os.path.exists(args.payoff):
+        with open(args.payoff, "r") as f:
+            payoff = json.loads(f.read())
+            payoff = np.asarray(payoff)
+            
+            (*shape, shape_length) = payoff.shape
+            assert shape_length == len(shape), "Payoff matrix shape does not match with the number of players"
     
-    FOUND_SOLUTIONS = []
-    
-    l, u = -6, 6
-    shape = [2, 2, 2]
+    else:
+        l, u = -6, 6
+        shape = [2, 2, 2]
 
-    payoff = np.random.randint(l, u, size=(*shape, len(shape)))
+        payoff = np.random.randint(l, u, size=(*shape, len(shape)))
+    
+    DOMINANT_STRATEGIES = []
     
     history = [list(range(shape[i])) for i in range(len(shape))]
     dfs_dominant_strategies(payoff, history=history)
     
-    print(set(FOUND_SOLUTIONS))
+    print(set(DOMINANT_STRATEGIES))
