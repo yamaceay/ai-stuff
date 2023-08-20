@@ -4,6 +4,7 @@ import numpy as np
 from _not import Not
 from _and import And
 from _or import Or
+from common import fit
 
 X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
 y = np.array([0, 1, 1, 0])
@@ -50,21 +51,4 @@ if __name__ == "__main__":
     optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
     criterion = nn.MSELoss()
     
-    for epoch in range(10000):
-        losses = 0
-        for data, target in zip(X, y):
-            data = torch.Tensor(data)
-            target = torch.Tensor([target])
-
-            optimizer.zero_grad()
-            output = model(data)
-            loss = criterion(output, target)
-            loss.backward()
-            optimizer.step()
-            
-            losses += loss.item()
-         
-        print('epoch {}, loss {}'.format(epoch, losses))
-    print('w', model.state_dict().items())
-
-    torch.save(model, "pickles/xor.pickle")
+    fit(model, X, y, optimizer, criterion, epochs=10000, name="xor")
