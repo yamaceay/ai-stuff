@@ -6,6 +6,15 @@ from _and import And
 from _or import Or
 from common import fit, load
     
+"""
+XOR gate
+Requires: <NOT, AND, OR>
+Returns: 
+- (0, 0) -> 0
+- (0, 1) -> 1
+- (1, 0) -> 1
+- (1, 1) -> 0 
+"""
 class Xor(nn.Module):
     def __init__(self):
         super(Xor, self).__init__()

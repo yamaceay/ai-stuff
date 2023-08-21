@@ -5,6 +5,15 @@ from _not import Not
 from _and import And
 from common import fit, load
 
+"""
+OR gate
+Requires: <NOT, AND>
+Returns: 
+- (0, 0) -> 0
+- (0, 1) -> 1
+- (1, 0) -> 1
+- (1, 1) -> 1 
+"""
 class Or(nn.Module):
     def __init__(self):
         super(Or, self).__init__()

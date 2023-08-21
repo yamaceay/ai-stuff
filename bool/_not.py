@@ -2,6 +2,13 @@ from torch import nn
 import numpy as np
 from common import fit
 
+"""
+NOT gate
+Requires: <>
+Returns: 
+- (0) -> 1
+- (1) -> 0
+"""
 class Not(nn.Module):
     def __init__(self):
         super(Not, self).__init__()

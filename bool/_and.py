@@ -2,6 +2,15 @@ from torch import nn
 import numpy as np
 from common import fit
 
+"""
+AND gate
+Requires: <>
+Returns: 
+- (0, 0) -> 0
+- (0, 1) -> 0
+- (1, 0) -> 0
+- (1, 1) -> 1 
+"""
 class And(nn.Module):
     def __init__(self):
         super(And, self).__init__()
