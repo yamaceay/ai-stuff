@@ -39,3 +39,16 @@ def load(model_class):
         param.requires_grad = False
         
     return new_model
+
+def test(model, X, y):
+    print("--------------------------------------------")
+    name = model.name()
+    for data, target in zip(X, y):
+        data = torch.Tensor(data)
+        target = torch.Tensor([target])
+        output = model(data)
+        
+        data = [str(int(x)) for x in data.numpy()]
+        pred = [str(int(x)) for x in output.round().numpy()]
+        truth = [str(int(x)) for x in target.numpy()]
+        print(f"{name}({', '.join(data)}) = {', '.join(pred)} (expected: {', '.join(truth)})")
